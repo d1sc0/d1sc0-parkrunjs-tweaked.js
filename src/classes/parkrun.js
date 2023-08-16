@@ -1,27 +1,27 @@
 // TODO: Rename to 'Client'
 
-const merge = require('lodash.merge');
+const merge = require("lodash.merge");
 
-const Net = require('./Net');
-const User = require('./User');
-const ClientUser = require('./ClientUser');
-const EventNewsPost = require('./EventNewsPost');
-const RosterVolunteer = require('./RosterVolunteer');
-const Event = require('./Event');
-const Country = require('./Country');
+const Net = require("./Net");
+const User = require("./User");
+const ClientUser = require("./ClientUser");
+const EventNewsPost = require("./EventNewsPost");
+const RosterVolunteer = require("./RosterVolunteer");
+const Event = require("./Event");
+const Country = require("./Country");
 
-const NetError = require('../errors/ParkrunNetError');
+const NetError = require("../errors/ParkrunNetError");
 
-const authSync = require('../auth');
+const authSync = require("../auth");
 
 // Import package.json for version and license static variables
-const { version, license } = require('../../package.json');
+const { version, license } = require("../../package.json");
 
 // We are requiring this so we get IntelliSense for end-users.
-const Tokens = require('./Tokens');
+const Tokens = require("./Tokens");
 
 // Class List Feature (helps with tests)
-const ClassList = require('../class_list');
+const ClassList = require("../class_list");
 
 /**
  * The main hub for interacting with the Parkrun API.
@@ -126,8 +126,8 @@ class Parkrun {
     access,
     refresh,
     access_expiry_date,
-    type = 'bearer',
-    scope = 'app',
+    type = "bearer",
+    scope = "app"
   }) {
     const tokens = new Tokens(
       { access_token: access, refresh_token: refresh, token_type: type, scope },
@@ -154,11 +154,11 @@ class Parkrun {
    *
    * @returns {Promise<Parkrun>}
    */
-  static async authRefresh({ token, type = 'bearer', scope = 'app' }) {
+  static async authRefresh({ token, type = "bearer", scope = "app" }) {
     const tokens = new Tokens({
       refresh_token: token,
       token_type: type,
-      scope,
+      scope
     });
 
     // use this method to test the validity of the refresh token provided.
@@ -195,7 +195,7 @@ class Parkrun {
     const net = this._getAuthedNet();
     const res = await net
       .get(`/v1/athletes/${id}`, {
-        params: { limit: 100, ...net._params },
+        params: { limit: 100, ...net._params }
       })
       .catch(err => {
         throw new NetError(err);
@@ -215,7 +215,7 @@ class Parkrun {
     const net = this._getAuthedNet();
     const res = await net
       .get(`/v1/news/${eventID}`, {
-        params: { offset: 0, ...net._params },
+        params: { offset: 0, ...net._params }
       })
       .catch(err => {
         throw new NetError(err);
@@ -238,7 +238,7 @@ class Parkrun {
    */
   async getMe() {
     const res = await this._getAuthedNet()
-      .get('/v1/me')
+      .get("/v1/me")
       .catch(err => {
         throw new NetError(err);
       });
@@ -270,7 +270,8 @@ class Parkrun {
     return output;
   }
 
-  async getAthleteDetails(athleteID) {
+
+async getAthleteDetails(athleteID) {
     // /events/12/rosters/date
     const res = await this._getAuthedNet()
       .get(`/v1/athletes/${athleteID}`)
@@ -279,7 +280,12 @@ class Parkrun {
       });
 
     return new User(res.data, this);
+     
   }
+
+
+
+
 
   /**
    * Asynchronously get an event based on its ID.
@@ -309,7 +315,7 @@ class Parkrun {
    */
   async getStats() {
     const res = await this._getAuthedNet()
-      .get('/v1/statistics')
+      .get("/v1/statistics")
       .catch(err => {
         throw new NetError(err);
       });
@@ -361,19 +367,19 @@ class Parkrun {
    */
   _makeStatsResponse(res) {
     // getStatsByEvent does not return this statistic type
-    if (res.data.data['Statistics-eventsThisWeek'] == null)
-      res.data.data['Statistics-eventsThisWeek'] = [];
+    if (res.data.data["Statistics-eventsThisWeek"] == null)
+      res.data.data["Statistics-eventsThisWeek"] = [];
 
     // Official channels use the first of the three stat results
     return {
-      ...res.data.data['Statistics-TotalEvents'][0],
-      ...res.data.data['Statistics-Runners'][0],
-      ...res.data.data['Statistics-Averages'][0],
-      ...res.data.data['Statistics-Clubs'][0],
-      ...res.data.data['Statistics-Groups'][0],
-      ...res.data.data['Statistics-TotalRunTime'][0],
-      ...res.data.data['Statistics-Volunteers'][0],
-      ...res.data.data['Statistics-eventsThisWeek'][0],
+      ...res.data.data["Statistics-TotalEvents"][0],
+      ...res.data.data["Statistics-Runners"][0],
+      ...res.data.data["Statistics-Averages"][0],
+      ...res.data.data["Statistics-Clubs"][0],
+      ...res.data.data["Statistics-Groups"][0],
+      ...res.data.data["Statistics-TotalRunTime"][0],
+      ...res.data.data["Statistics-Volunteers"][0],
+      ...res.data.data["Statistics-eventsThisWeek"][0]
     };
   }
 
@@ -408,7 +414,7 @@ class Parkrun {
    */
   async getAllEventsByCountry(countryID) {
     const res = await this._multiGetEventsRaw({
-      url: `/v1/countries/${countryID}/searchEvents`,
+      url: `/v1/countries/${countryID}/searchEvents`
     });
 
     return res.map(i => {
@@ -423,7 +429,7 @@ class Parkrun {
    * @throws {ParkrunNetError} ParkrunJS Networking Error.
    */
   async getAllEvents() {
-    const res = await this._multiGetEventsRaw({ url: '/v1/searchEvents' });
+    const res = await this._multiGetEventsRaw({ url: "/v1/searchEvents" });
 
     return res.map(i => {
       return new Event(i);
@@ -437,7 +443,7 @@ class Parkrun {
    * @throws {ParkrunNetError} ParkrunJS Networking Error.
    */
   async getAllEventNames() {
-    const res = await this._multiGetEventsRaw({ url: '/v1/searchEvents' });
+    const res = await this._multiGetEventsRaw({ url: "/v1/searchEvents" });
 
     return res.map(i => {
       return i.EventLongName;
@@ -452,7 +458,7 @@ class Parkrun {
    */
   async getAllEventNamesByCountry(countryID) {
     const res = await this._multiGetEventsRaw({
-      url: `/v1/countries/${countryID}/searchEvents`,
+      url: `/v1/countries/${countryID}/searchEvents`
     });
 
     return res.map(i => {
@@ -471,7 +477,7 @@ class Parkrun {
    */
   async getAthleteParkruns(athleteID) {
     const res = await this._multiGetEventsRaw({
-      params: { athleteID, expandedDetails: false },
+      params: { athleteID, expandedDetails: false }
     });
 
     return res
@@ -502,7 +508,7 @@ class Parkrun {
     data = firstRequest.data[dataName];
 
     console.log(range);
-    console.log('FIRST REQUEST DONE');
+    console.log("FIRST REQUEST DONE");
 
     let amountDownloaded = Number.parseInt(range.last);
     const amountTotal = Number.parseInt(range.max);
@@ -510,7 +516,7 @@ class Parkrun {
 
     const amountOfPullsRequired = Math.ceil(amountRemaining / 100);
 
-    console.log('Pulls Required: ' + amountOfPullsRequired);
+    console.log("Pulls Required: " + amountOfPullsRequired);
 
     const parallelRequests = [];
 
@@ -535,7 +541,7 @@ class Parkrun {
       data = data.concat(response.data[dataName]);
     });
 
-    console.log('[parkrun._multiGet] found ' + data.length + ' items.');
+    console.log("[parkrun._multiGet] found " + data.length + " items.");
 
     // We now return the FULL array.
     return data;
@@ -549,20 +555,20 @@ class Parkrun {
         throw new NetError(err);
       });
 
-    return { data: res.data.data, range: res.data['Content-Range'] };
+    return { data: res.data.data, range: res.data["Content-Range"] };
   }
 
   async _multiGetEventsRaw({
-    url = '/v1/events',
-    params = { expandedDetails: true },
+    url = "/v1/events",
+    params = { expandedDetails: true }
   }) {
     return await this._multiGet(
       url,
       {
-        params,
+        params
       },
-      'Events',
-      'EventsRange'
+      "Events",
+      "EventsRange"
     );
   }
 }

@@ -1,16 +1,16 @@
-const Validate = require('../validate');
+const Validate = require("../validate");
 
-const HomeRun = require('./HomeRun');
-const RunResult = require('./RunResult');
-const ClubsEnums = require('../common/ClubsEnums');
+const HomeRun = require("./HomeRun");
+const RunResult = require("./RunResult");
+const ClubsEnums = require("../common/ClubsEnums");
 
-const NetError = require('../errors/ParkrunNetError');
-const DataNotAvailableError = require('../errors/ParkrunDataNotAvailableError');
+const NetError = require("../errors/ParkrunNetError");
+const DataNotAvailableError = require("../errors/ParkrunDataNotAvailableError");
 
-const AthleteExpandedSchema = require('../schemas/AthleteExpanded');
+const AthleteExpandedSchema = require("../schemas/AthleteExpanded");
 
 // Importing for IntelliSense
-const AxiosInstance = require('axios').default;
+const AxiosInstance = require("axios").default;
 
 const capitalize = str =>
   str.toLowerCase().replace(/^\w/, c => c.toUpperCase());
@@ -108,7 +108,7 @@ class User {
    */
   getSex() {
     throw new DataNotAvailableError(
-      'getSex() - removed upstream as of Febuary 2020, see issue #33.'
+      "getSex() - removed upstream as of Febuary 2020, see issue #33."
     );
   }
 
@@ -135,71 +135,61 @@ class User {
      */
     const res = await this._core
       ._getAuthedNet()
-      .get('/v1/hasrun/count/Run', {
-        params: { athleteId: this._athleteID, offset: 0 },
+      .get("/v1/hasrun/count/Run", {
+        params: { athleteId: this._athleteID, offset: 0 }
       })
       .catch(err => {
         throw new NetError(err);
       });
     // If the user has no runs, this will return NaN, so in that case just return 0.
+   console.log(res.data.data)
     return Number.parseInt(res.data.data.TotalRuns[0].RunTotal) || 0;
   }
 
-  async getCounts(eventNum) {
+
+
+   async getTGFCounts(eventNum) {
     /*
-     * Custom addition which returns an object showing run count, volunteer count but also numbers specific to a
+     * Custom addition which returns an object showing run count, volunteer count specific to a
      * specified event number passed in
      * There is no visible benefit outside the margin of error at this time.
      */
     const res = await this._core
       ._getAuthedNet()
-      .get('/v1/hasrun/volunteer/count', {
-        params: { athleteId: this._athleteID, offset: 0 },
+      .get(`/v1/events/${eventNum}/hasrun/volunteer/count`, {
+        params: { athleteId: this._athleteID, offset: 0 }
       })
       .catch(err => {
         throw new NetError(err);
       });
-
-    let athleteSummary = res.data.data.AthleteSummary;
-    let runCount = athleteSummary.reduce((accumulator, object) => {
-      return accumulator + parseInt(object.RunTotal);
-    }, 0);
-    let volCount = athleteSummary.reduce((accumulator, object) => {
-      return accumulator + parseInt(object.VolunteeringTotal);
-    }, 0);
-    let TGFrunCount = parseInt(
-      athleteSummary.find(item => item.EventNumber === eventNum).RunTotal
-    );
-    let TGFvolCount = parseInt(
-      athleteSummary.find(item => item.EventNumber === eventNum)
-        .VolunteeringTotal
-    );
-
-    const counts = {
-      runCount: runCount,
-      volCount: volCount,
-      TGFrunCount: TGFrunCount,
-      TGFvolCount: TGFvolCount,
-    };
+   
+    let athleteSummary = res.data.data.AthleteSummary[0]
+    let TGFrunCount = parseInt(athleteSummary.RunTotal);
+    let TGFvolCount = parseInt(athleteSummary.VolunteeringTotal);
+   
+    const counts = {TGFrunCount: TGFrunCount, TGFvolCount: TGFvolCount, }
     //console.log(counts)
-    return counts;
+    return counts
   }
+
+
+
 
   /**
    * Get a array of the user's runs.
    *
    * @returns {Promise<Array<RunResult>>}
-   *
+   * 
    * @throws {ParkrunNetError} ParkrunJS Networking Error.
    */
   async getRuns() {
     const res = await this._core._multiGet(
-      '/v1/results',
+      "/v1/results",
       {
-        params: { athleteId: this._athleteID },
+        params: { athleteId: this._athleteID }
       },
-      'Results',
-      'ResultsRange'
+      "Results",
+      "ResultsRange"
     );
 
     return res.map(i => {
@@ -255,21 +245,51 @@ class User {
         params: {
           athleteId: this._athleteID,
           limit: 1,
-          offset: 0,
-        },
+          offset: 0
+        }
       })
       .catch(err => {
         throw new NetError(err);
       });
+      
     const data = res.data.data.Results[0];
     if (data == undefined)
-      throw new DataNotAvailableError('getClubs, athlete ' + this.getID());
+      throw new DataNotAvailableError("getClubs, athlete " + this.getID());
     return {
       ParkrunClub: ClubsEnums.CLUBS[data.parkrunClubMembership],
       JuniorClub: ClubsEnums.JUNIOR_CLUBS[data.JuniorClubMembership],
-      VolunteerClub: ClubsEnums._volnFromCount(data.volcount),
+      VolunteerClub: ClubsEnums._volnFromCount(data.volcount)
     };
   }
+
+async getCounts() {
+    // We are using /v1/results (from getRuns() as it returns all club statuses at once.)
+    const res = await this._core
+      ._getAuthedNet()
+      .get(`/v1/results`, {
+        params: {
+          athleteId: this._athleteID,
+          limit: 1,
+          offset: 0
+        }
+      })
+      .catch(err => {
+        throw new NetError(err);
+      });
+      
+    const data = res.data.data.Results[0];
+    //console.log(data)
+    let obj={};
+    if (data !== undefined) {
+      obj = {runCount: data.RunTotal,
+      volCount: data.volcount,
+      };}
+      else { obj = {runCount: 'unknown',
+      volCount: 'unknown',
+      };}
+    return obj;
+  }
+
   /**
    * Get an array of {@link Event} objects for each parkrun that the athlete has run, in alphabetical order.
    *
