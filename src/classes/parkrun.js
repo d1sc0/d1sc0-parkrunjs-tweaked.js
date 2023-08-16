@@ -270,6 +270,17 @@ class Parkrun {
     return output;
   }
 
+  async getAthleteDetails(athleteID) {
+    // /events/12/rosters/date
+    const res = await this._getAuthedNet()
+      .get(`/v1/athletes/${athleteID}`)
+      .catch(err => {
+        throw new NetError(err);
+      });
+
+    return new User(res.data, this);
+  }
+
   /**
    * Asynchronously get an event based on its ID.
    *
