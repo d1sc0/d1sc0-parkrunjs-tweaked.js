@@ -191,7 +191,7 @@ class User {
       "Results",
       "ResultsRange"
     );
-
+    
     return res.map(i => {
       return new RunResult(i);
     });
@@ -327,6 +327,27 @@ async getCounts() {
     return athlete;
   }
 
+  async getTGFpb(eventNum) {
+
+    const res = await this._core
+      ._getAuthedNet()
+      .get(`/v1/athletes/${this._athleteID}/events/${eventNum}/pbs`)
+      .catch(err => {
+        throw new NetError(err);
+      });
+    
+    const data = res.data.data.PBs[0]
+    
+    let obj='';
+    if (data === undefined) {
+      obj = 'not a runner!';
+      }
+      else { obj = data.RunTime };
+      //const athlete = res.data.data.Athletes[0]
+    return obj;
+    }
+  
+  
 
 }
 
