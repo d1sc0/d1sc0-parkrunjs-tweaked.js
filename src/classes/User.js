@@ -313,6 +313,21 @@ async getCounts() {
   async getEvents() {
     return this._core.getAthleteParkruns(this._athleteID);
   }
+
+ async getAthleteExtras() {
+
+    const res = await this._core
+      ._getAuthedNet()
+      .get(`/v1/athletes/${this._athleteID}`)
+      .catch(err => {
+        throw new NetError(err);
+      });
+    
+      const athlete = res.data.data.Athletes[0]
+    return athlete;
+  }
+
+
 }
 
 module.exports = User;
