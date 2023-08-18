@@ -262,6 +262,7 @@ class User {
     };
   }
 
+
 async getCounts() {
     // We are using /v1/results (from getRuns() as it returns all club statuses at once.)
     const res = await this._core
@@ -284,11 +285,22 @@ async getCounts() {
       obj = {runCount: data.RunTotal,
       volCount: data.volcount,
       };}
-      else { obj = {runCount: 'unknown',
-      volCount: 'unknown',
+      else { 
+      
+        const pay = await this._core
+      ._getAuthedNet()
+      .get(`v1/athletes/${this._athleteID}/volunteerduties/Historical/DayTotals`, {
+        
+      })
+      .catch(err => {
+        throw new NetError(err);
+      });
+      obj = {runCount: '0',
+      volCount: pay.data.data.VolunteerDuties[0].TotalDaysVolunteered,
       };}
     return obj;
   }
+
 
   /**
    * Get an array of {@link Event} objects for each parkrun that the athlete has run, in alphabetical order.
